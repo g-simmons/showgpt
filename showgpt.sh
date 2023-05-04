@@ -1,7 +1,32 @@
 #!/bin/bash
 
-# Accept the list of files or glob strings as arguments
-source_list=("$@")
+# Check if the current directory is part of a git repo
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  # If it is, generate a list of files excluding gitignored files
+  source_list=($(git ls-files --exclude-standard))
+else
+  # Otherwise, generate a list of all files in the current directory and its subdirectories
+  source_list=($(find . -type f))
+fi
+
+# Accept additional list of files or glob strings as arguments, if any
+if [ "$#" -gt 0 ]; then
+  source_list=("$@")
+fi
+
+# Check if the script was called with -h or --help
+if [[ $1 == "-h" || $1 == "--help" ]]; then
+  # Display the usage statement and exit
+  echo
+  echo "Usage: showgpt [file1] [file2] ..."
+  echo "Displays the contents of specified files or all files within the current directory (and its subfolders), excluding gitignored files if the current directory is part of a git repo."
+  echo
+  echo "Options:"
+  echo "-h, --help     Displays this usage statement."
+  echo
+
+  exit 0
+fi
 
 # Check if there is a readme file in the source list (case-insensitive)
 readme_index=-1
@@ -19,7 +44,11 @@ if [ "$readme_index" -ge 0 ]
 then
   readme_file="${source_list[$readme_index]}"
   echo "File path: $readme_file"
+
+  echo
   echo "File contents:"
+
+  echo
   cat "$readme_file"
   echo "----------------------------"
   unset source_list[$readme_index]
@@ -61,5 +90,6 @@ do
   # Display the file contents
   echo "File contents:"
   cat "$file"
+  echo
   echo "----------------------------"
 done
