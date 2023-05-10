@@ -1,5 +1,38 @@
 #!/bin/bash
 
+declare -a exclude_patterns
+
+# Parsing command line options
+while getopts "e:h" opt; do
+  case ${opt} in
+    e )
+      exclude_patterns+=("$OPTARG")
+    ;;
+    h )
+      # Display the usage statement and exit
+      echo
+      echo "Usage: showgpt [-e exclude_pattern]... [file1] [file2] ..."
+      echo "Displays the contents of specified files or all files within the current directory (and its subfolders), excluding gitignored files if the current directory is part of a git repo."
+      echo
+      echo "Options:"
+      echo "-e Specifies a pattern to exclude files. Can be used multiple times for different patterns. Use quotes to avoid issues with special characters."
+      echo "-h Displays this usage statement."
+      echo
+      
+      exit 0
+    ;;
+    \? )
+      echo "Invalid Option: -$OPTARG" 1>&2
+      exit 1
+    ;;
+    : )
+      echo "Invalid Option: -$OPTARG requires an argument" 1>&2
+      exit 1
+    ;;
+  esac
+done
+shift $((OPTIND -1))
+
 # Check if the current directory is part of a git repo
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   # If it is, generate a list of files excluding gitignored files
@@ -9,23 +42,14 @@ else
   source_list=($(find . -type f))
 fi
 
+# If exclude patterns are provided, filter the source list
+for pattern in "${exclude_patterns[@]}"; do
+  source_list=($(printf '%s\n' "${source_list[@]}" | grep -v "$pattern"))
+done
+
 # Accept additional list of files or glob strings as arguments, if any
 if [ "$#" -gt 0 ]; then
   source_list=("$@")
-fi
-
-# Check if the script was called with -h or --help
-if [[ $1 == "-h" || $1 == "--help" ]]; then
-  # Display the usage statement and exit
-  echo
-  echo "Usage: showgpt [file1] [file2] ..."
-  echo "Displays the contents of specified files or all files within the current directory (and its subfolders), excluding gitignored files if the current directory is part of a git repo."
-  echo
-  echo "Options:"
-  echo "-h, --help     Displays this usage statement."
-  echo
-
-  exit 0
 fi
 
 # Check if there is a readme file in the source list (case-insensitive)
@@ -44,10 +68,10 @@ if [ "$readme_index" -ge 0 ]
 then
   readme_file="${source_list[$readme_index]}"
   echo "File path: $readme_file"
-
+  
   echo
   echo "File contents:"
-
+  
   echo
   cat "$readme_file"
   echo "----------------------------"
@@ -86,7 +110,7 @@ for file in "${files[@]}"
 do
   # Display the file path relative to the current directory
   echo "File path: $file"
-
+  
   # Display the file contents
   echo "File contents:"
   cat "$file"
