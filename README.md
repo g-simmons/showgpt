@@ -9,13 +9,14 @@ This tool can potentially reveal sensitive information about your filesystem, so
 ## Usage
 
 ```
-./showgpt.sh [file1] [file2] ...
+./showgpt.sh [-e exclude_pattern]... [file1] [file2] ...
 ```
 
 Running the script without any arguments will display the contents of all files within the current directory and its subdirectories, excluding gitignored files if the current directory is part of a git repo. Additional arguments can be specified to display the contents of specific files.
 
 Options:
-- `-h`, `--help`: Displays the usage statement.
+- `-h`: Displays the usage statement.
+- `-e`: Specifies a pattern to exclude files. Can be used multiple times for different patterns. Use quotes to avoid issues with special characters.
 
 ## Example
 
@@ -42,6 +43,24 @@ To display the contents of only the `main.py` file and the `test_main.py` file, 
 
 ```
 ./showgpt.sh src/main.py tests/test_main.py
+```
+
+To exclude all files ending in `.py`, you can run:
+
+```
+./showgpt.sh -e .py
+```
+
+To exclude all files ending in `.py` and `.md`, you can run:
+
+```
+./showgpt.sh -e .py -e .md
+```
+
+To output the contents of all files in the current directory and its subdirectories to a file called `output.txt`, you can run:
+
+```
+./showgpt.sh > output.txt
 ```
 
 If you run the script from a directory that is part of a git repo, the script will exclude gitignored files from the list of files to display.
